@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Ratan Game</title>
+  <style>
+    body {
+      margin: 0;
+      background: skyblue;
+      text-align: center;
+      font-family: Arial;
+    }
+    h1 { color: red; }
+    canvas {
+      background: lightblue;
+      display: block;
+      margin: auto;
+    }
+  </style>
+</head>
+
+<body>
+
+<h1>🐦 RATAN GAME</h1>
+<p>Tap / Click to Fly & Collect Coins 💰</p>
+
+<canvas id="gameCanvas" width="400" height="500"></canvas>
+
+<script>
+let canvas = document.getElementById("gameCanvas");
+let ctx = canvas.getContext("2d");
+
+// 🐦 Bird Image
+let birdImg = new Image();
+birdImg.src = "https://i.imgur.com/QZ6XG7Q.png"; // bird image link
+
+let bird = {
+  x: 80,
+  y: 200,
+  size: 40,
+  gravity: 0.5,
+  lift: -8,
+  velocity: 0
+};
+
+let pipes = [];
+let coins = [];
+let score = 0;
+let coinScore = 0;
+let gameOver = false;
+
+// create pipes
+function createPipe() {
+  let gap = 120;
+  let top = Math.random() * 250;
+
+  pipes.push({
+    x: 400,
+    top: top,
+    bottom: top + gap,
+    width: 50
+  });
+
+  coins.push({
+    x: 420,
+    y: top + gap/2,
+    size: 10,
+    collected: false
+  });
+}
+
+// draw bird (image)
+function drawBird() {
+  ctx.drawImage(birdImg, bird.x, bird.y, bird.size, bird.size);
+}
+
+// draw pipes
+function drawPipes() {
+  ctx.fillStyle = "green";
+  pipes.forEach(pipe => {
+    ctx.fillRect(pipe.x, 0, pipe.width, pipe.top);
+    ctx.fillRect(pipe.x, pipe.bottom, pipe.width, 500);
+  });
+}
+
+// draw coins
+function drawCoins() {
+  ctx.fillStyle = "gold";
+  coins.forEach(c => {
+    if (!c.collected) {
+      ctx.beginPath();
+      ctx.arc(c.x, c.y, c.size, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  });
+}
+
+// update game
+function update() {
+  if (gameOver) return;
+
+  ctx.clearRect(0, 0, 400, 500);
+
+  // bird physics
+  bird.velocity += bird.gravity;
+  bird.y += bird.velocity;
+
+  drawBird();
+
+  // pipes
+  pipes.forEach(pipe => {
+    pipe.x -= 2;
+
+    // collision
+    if (
+      bird.x < pipe.x + pipe.width &&
+      bird.x + bird.size > pipe.x &&
+      (bird.y < pipe.top || bird.y + bird.size > pipe.bottom)
+    ) {
+      gameOver = true;
+      alert("Game Over! Score: " + score + " Coins: " + coinScore);
+      location.reload();
+    }
+  });
+
+  drawPipes();
+
+  // coins movement + collection
+  coins.forEach(c => {
+    c.x -= 2;
+
+    if (
+      !c.collected &&
+      bird.x < c.x + c.size &&
+      bird.x + bird.size > c.x &&
+      bird.y < c.y + c.size &&
+      bird.y + bird.size > c.y
+    ) {
+      c.collected = true;
+      coinScore++;
+    }
+  });
+
+  drawCoins();
+
+  // ground collision
+  if (bird.y > 480 || bird.y < 0) {
+    gameOver = true;
+    alert("Game Over! Score: " + score + " Coins: " + coinScore);
+    location.reload();
+  }
+
+  // new pipe
+  if (Math.random() < 0.02) {
+    createPipe();
+    score++;
+  }
+
+  // text
+  ctx.fillStyle = "black";
+  ctx.fillText("Score: " + score, 10, 20);
+  ctx.fillText("Coins: " + coinScore, 10, 40);
+}
+
+// controls
+document.addEventListener("click", () => {
+  bird.velocity = bird.lift;
+});
+document.addEventListener("touchstart", () => {
+  bird.velocity = bird.lift;
+});
+
+// loop
+setInterval(update, 20);
+</script>
+
+</body>
+</html>
